@@ -96,6 +96,6 @@ for i, (train_idx, test_idx) in enumerate(kf.split(X_scaled)):
     mse_across_folds.append(fold_mse)
     r2_across_folds.append(fold_r2)
 
-print(f'Mean MSE: {np.mean(mse_across_folds)}')
-print(f'Mean RMSE: {np.sqrt(mse_across_folds).mean()}')
-print(f'Mean R2: {np.mean(r2_across_folds)}')
+print(f'Mean MSE: {np.mean(mse_across_folds) :,.2f}')
+print(f'Mean RMSE: {np.sqrt(mse_across_folds).mean() :,.2f}')
+print(f'Mean R2: {np.mean(r2_across_folds) :,.2f}')
