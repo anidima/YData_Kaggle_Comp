@@ -49,7 +49,7 @@ y = y.values.reshape(-1, 1)
 # scaler = StandardScaler()
 scaler = MinMaxScaler()
 X_scaled = scaler.fit_transform(X)
-y_scaled = scaler.fit_transform(y)
+# y_scaled = scaler.fit_transform(y)
 
 # train-validation split
 X_train, X_val, y_train, y_val = train_test_split(X_scaled, y, test_size=.3, random_state=42)
@@ -59,12 +59,17 @@ model = LinearRegression()
 model.fit(X_train, y_train)
 preds = model.predict(X_val)
 
-# inverse scaling
-preds = scaler.inverse_transform(preds)
-y_val = scaler.inverse_transform(y_val)
+# # inverse scaling
+# preds = scaler.inverse_transform(preds)
+# y_val = scaler.inverse_transform(y_val)
+
+# logs
+
+preds_log = np.log(preds)
+y_val_log = np.log(y_val)
 
 # assessment
-mse = mean_squared_error(y_val, preds)
+mse = mean_squared_error(y_val_log, preds_log)
 r2 = r2_score(y_val, preds)
 print(f'MSE: {mse :,.2f} / RMSE: {np.sqrt(mse) :,.2f} / R2: {r2 :,.2f}')
 
@@ -76,10 +81,12 @@ kf = KFold(n_splits=10, random_state=None, shuffle=False)
 for i, (train_idx, test_idx) in enumerate(kf.split(X_scaled)):
     X_train, y_train = X_scaled[train_idx], y[train_idx]
     X_val, y_val = X_scaled[test_idx], y[test_idx]
+    y_val_log = np.log(y_val)
     model.fit(X_train, y_train)
     fold_preds = model.predict(X_val)
-    fold_mse = mean_squared_error(y_val, fold_preds)
-    fold_r2 = r2_score(y_val, fold_preds)
+    fold_preds_log = np.log(fold_preds)
+    fold_mse = mean_squared_error(y_val_log, fold_preds_log)
+    fold_r2 = r2_score(y_val_log, fold_preds_log)
     print(f'- Fold {i}. MSE: {fold_mse :,.2f} / RMSE: {np.sqrt(fold_mse) :,.2f} / R2: {fold_r2 :,.2f}')
     mse_across_folds.append(fold_mse)
     r2_across_folds.append(fold_r2)
@@ -93,6 +100,7 @@ test_df = pd.read_csv('./test.csv')
 print(f'Test dimensions: {test_df.shape}')
 
 # only relevant cols
+test_ids = test_df['Id']
 test_df = test_df.loc[:, ct.index[1:]]
 test_df.drop(columns=correlated_cols_to_drop, inplace=True)
 print(f'New dimensions: {test_df.shape}')
@@ -111,9 +119,10 @@ X_test = scaler.fit_transform(test_df)
 
 # importing test submission
 test_sub = pd.read_csv('./sample_submission.csv')
+assert test_sub['Id'].equals(test_ids)
 y_sample = test_sub['SalePrice'].values.reshape(-1, 1)
 
-# testing baselint model and comparing with sample submission
+# testing baseline model and comparing with sample submission
 model = LinearRegression()
 model.fit(X_train, y_train)
 preds = model.predict(X_test)
@@ -129,5 +138,8 @@ sns.lineplot(x=range(len(preds)), y=preds.flatten(), label='Our prediction', col
 sns.lineplot(x=range(len(y_sample)), y=y_sample.flatten(), label='Sample prediction', color='dimgrey')
 plt.legend()
 plt.title('Prediction vs Sample Submission', fontsize=20)
-plt.show();
+plt.show()
+
+
+
 
